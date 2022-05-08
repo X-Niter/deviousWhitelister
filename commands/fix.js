@@ -105,7 +105,7 @@ module.exports = {
                     .addOptions(constructJSON())
             )
         interaction.reply("check your dms!");
-        interaction.user.send({ content: 'Please select the server you wish to fix your whitelist on', components: [row] });
+        interaction.user.send({ ephemeral: true , content: 'Please select the server you wish to fix your whitelist on', components: [row] });
     },
     async onSelect(interaction) {
         const values = interaction.values.toString().split(',')
