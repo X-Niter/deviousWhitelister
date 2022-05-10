@@ -23,17 +23,24 @@ async function fixWhitelist(user, userID, instanceName) {
                 username: process.env.AMP_USER,
                 password: process.env.AMP_PASSWORD,
                 token: "",
-                rememberMe: false
+                rememberMe: false,
+                cancelToken: source.token
             }, { Accept: "text / javascript" })
             if (!sessionId.data.success) {
-                console.log("Failed to log into API")
+                console.log("Login failed")
+                //log failed login to file
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 42\n`)
+                clearTimeout(timeout);
                 return;
             }
+            clearTimeout(timeout);
             sessionId = sessionId.data.sessionID
             let response = await axios.post(API + "/ADSModule/GetInstances", { SESSIONID: sessionId })
             let GUID = Object.entries(response.data.result[0].AvailableInstances).filter(instance => instance[1].InstanceName === instanceName)
             return GUID[0][1].InstanceID
         } catch (error) {
+            //log error to file
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 56\n`)
             console.log(error);
         }
     }
@@ -45,26 +52,39 @@ async function fixWhitelist(user, userID, instanceName) {
                 username: process.env.AMP_USER,
                 password: process.env.AMP_PASSWORD,
                 token: "",
-                rememberMe: false
+                rememberMe: false,
+                cancelToken: source.token
             }, { Accept: "text / javascript" })
             if (!sessionId.data.success) {
+                clearTimeout(timeout);
+                //log to file
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 72\n`)
                 console.log("Failed to log into API")
                 return;
             }
+            clearTimeout(timeout);
             let instanceSessionId = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/Login`, {
                 username: process.env.AMP_USER,
                 password: process.env.AMP_PASSWORD,
                 token: "",
-                rememberMe: false
+                rememberMe: false,
+                cancelToken: source.token
             }, { Accept: "text / javascript", SESSIONID: sessionId })
             if (!instanceSessionId.data.success) {
+                clearTimeout(timeout);
+                //log to file
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 82\n`)
                 console.log("Failed to log into API")
                 return;
             }
+
             instanceSessionId = instanceSessionId.data.sessionID
-            let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId })
+            let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId, cancelToken: source.token})
+            clearTimeout(timeout);
             return response.data
         } catch (error) {
+            //log error to file
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 92\n`)
             console.log(error);
         }
     }

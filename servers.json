@@ -1,5 +1,30 @@
 [
     {
+        "label": "All in One [Modded One Block]",
+        "description": "get whitelisted on All in One [Modded One Block]",
+        "value": "AllinOneModdedOneBlock"
+    },
+    {
+        "label": "Enigmatica 6",
+        "description": "get whitelisted on Enigmatica 6",
+        "value": "Enigmatica6"
+    },
+    {
+        "label": "Enigmatica 6 Expert",
+        "description": "get whitelisted on Enigmatica 6 Expert",
+        "value": "Enigmatica6Expert"
+    },
+    {
+        "label": "Vault Hunters",
+        "description": "get whitelisted on Vault Hunters",
+        "value": "VaultHunters"
+    },
+    {
+        "label": "All The Mods 6",
+        "description": "get whitelisted on All The Mods 6",
+        "value": "AllTheMods6"
+    },
+    {
         "label": "test",
         "description": "test",
         "value": "EventServer"
