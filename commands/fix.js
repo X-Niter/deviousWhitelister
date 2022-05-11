@@ -4,6 +4,13 @@ const fs = require('fs');
 const axios = require('axios').default;
 const db = require('better-sqlite3')('users.db');
 
+const source = axios.CancelToken.source();
+const timeout = setTimeout(() => {
+  source.cancel();
+  // Timeout Logic
+}, 15*1000);
+
+
 function insertToDb(queryString){
     let query = db.prepare(queryString).run()
     return query
@@ -29,7 +36,7 @@ async function fixWhitelist(user, userID, instanceName) {
             if (!sessionId.data.success) {
                 console.log("Login failed")
                 //log failed login to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 42\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 41\n`)
                 clearTimeout(timeout);
                 return;
             }
@@ -40,7 +47,7 @@ async function fixWhitelist(user, userID, instanceName) {
             return GUID[0][1].InstanceID
         } catch (error) {
             //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 56\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 52\n`)
             console.log(error);
         }
     }
@@ -58,7 +65,7 @@ async function fixWhitelist(user, userID, instanceName) {
             if (!sessionId.data.success) {
                 clearTimeout(timeout);
                 //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 72\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 70\n`)
                 console.log("Failed to log into API")
                 return;
             }
@@ -73,7 +80,7 @@ async function fixWhitelist(user, userID, instanceName) {
             if (!instanceSessionId.data.success) {
                 clearTimeout(timeout);
                 //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 82\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 85\n`)
                 console.log("Failed to log into API")
                 return;
             }
@@ -84,14 +91,14 @@ async function fixWhitelist(user, userID, instanceName) {
             return response.data
         } catch (error) {
             //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 92\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 96\n`)
             console.log(error);
         }
     }
 
     const GUID = await getInstance(instanceName)
     //find username using the userId from the database
-    const username = retrieveFromDb(`SELECT name FROM users WHERE id = '${userID}'`)
+    const username = retrieveFromDb(`SELECT name FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     if(!username) {
         return 404
     }

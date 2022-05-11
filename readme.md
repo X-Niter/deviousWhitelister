@@ -38,12 +38,5 @@ clone this repo, extract it anywhere, make sure you have node.js (latest), open 
  - AMP_USER: username for the amp user that the bot manages
  - AMP_PASSWORD: the password for the amp account that the bot manages
  - AMPIP: ip:port of the amp server admin panel, for example: 127.0.0.1:8080
-
-
-## additional configuration
-
-some configurations can be changed from the files in the code
-
-> register-commands.js
-
-this script registers the commands before the bot runs, change ``clientId`` and ``guildId`` to your guild and cliet id
+ - CLIENTID: client id of the bot
+ - GUILDID: guild id where the bot will work

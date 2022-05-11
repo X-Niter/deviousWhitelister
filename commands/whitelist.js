@@ -4,7 +4,7 @@ const fs = require('fs');
 const axios = require('axios').default;
 const db = require('better-sqlite3')('users.db');
 
-const source = CancelToken.source();
+const source = axios.CancelToken.source();
 const timeout = setTimeout(() => {
   source.cancel();
   // Timeout Logic
@@ -96,7 +96,7 @@ async function whitelist(user, userID, instanceName) {
 
     const GUID = await getInstance(instanceName)
     //check if user is already in the database
-    let userData = retrieveFromDb(`SELECT * FROM users WHERE id = '${userID} AND server = ${instanceName}'`)
+    let userData = retrieveFromDb(`SELECT * FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     if (userData) {
         return 409
     }

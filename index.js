@@ -16,8 +16,15 @@ if (!fs.existsSync('./log.txt')) {
 //uncaught exception handler
 process.on('uncaughtException', (err) => {
     console.log(err);
-    fs.appendFileSync('./log.txt', `Uncaught Exception at: ${new Date().toLocaleString()}: ${err}`)
+    fs.appendFileSync('./log.txt', `Uncaught Exception at: ${new Date().toLocaleString()}: ${err}\n`)
 })
+
+const source = axios.CancelToken.source();
+const timeout = setTimeout(() => {
+  source.cancel();
+  // Timeout Logic
+}, 15*1000);
+
 async function getInstance(instanceName) {
     const API = `http://${process.env.AMPIP}/API`
     try {
@@ -60,7 +67,7 @@ async function sendToInstance(GUID, message) {
         if (!sessionId.data.success) {
             clearTimeout(timeout);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 72\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 63\n`)
             console.log("Failed to log into API")
             return;
         }
@@ -75,7 +82,7 @@ async function sendToInstance(GUID, message) {
         if (!instanceSessionId.data.success) {
             clearTimeout(timeout);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 82\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 78\n`)
             console.log("Failed to log into API")
             return;
         }
@@ -86,7 +93,7 @@ async function sendToInstance(GUID, message) {
         return response.data
     } catch (error) {
         //log error to file
-        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 92\n`)
+        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 89\n`)
         console.log(error);
     }
 }
@@ -133,7 +140,7 @@ client.on('interactionCreate', async interaction => {
         const command = client.commands.get(interaction.commandName)
         if (!command) {
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in whitelist.js at line 131\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in index.js at line 145\n`)
             console.log(interaction);
         }
         try {
@@ -141,7 +148,7 @@ client.on('interactionCreate', async interaction => {
         } catch (error) {
             console.error(error);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 139\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 144\n`)
             await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
         }
     }
@@ -151,7 +158,7 @@ client.on('interactionCreate', async interaction => {
             command.onSelect(interaction);
         } catch (error) {
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 149\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 154\n`)
             console.log(error);
         }
     }
