@@ -34,7 +34,7 @@ async function whitelist(user, userID, instanceName) {
             if (!sessionId.data.success) {
                 console.log("Login failed")
                 //log failed login to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 42\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 37\n`)
                 clearTimeout(timeout);
                 return;
             }
@@ -45,7 +45,7 @@ async function whitelist(user, userID, instanceName) {
             return GUID[0][1].InstanceID
         } catch (error) {
             //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 56\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 48\n`)
             console.log(error);
         }
     }
@@ -63,7 +63,7 @@ async function whitelist(user, userID, instanceName) {
             if (!sessionId.data.success) {
                 clearTimeout(timeout);
                 //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 72\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 66\n`)
                 console.log("Failed to log into API")
                 return;
             }
@@ -78,7 +78,7 @@ async function whitelist(user, userID, instanceName) {
             if (!instanceSessionId.data.success) {
                 clearTimeout(timeout);
                 //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 82\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 81\n`)
                 console.log("Failed to log into API")
                 return;
             }
@@ -127,8 +127,13 @@ module.exports = {
                     .setPlaceholder("Select a server")
                     .addOptions(constructJSON())
             )
-        interaction.reply("check your dms!");
-        interaction.user.send({ content: 'Please select the server you wish to be withelisted in', components: [row] });
+            
+            interaction.user.send({content: 'Please select the server you wish to be withelisted in', components: [row] }).then(() => {
+                interaction.reply({ephemeral: true, content: "check your dms!"});
+            }).catch(err => {
+                interaction.reply({ephemeral: true, content: "I couldn't send you a dm!, perhaps your dms are closed, you can open them by going into the server privacy settings and enabling dms, here is a video for reference https://streamable.com/h71d3h"});
+            })
+                
     },
     async onSelect(interaction) {
         const values = interaction.values.toString().split(',')

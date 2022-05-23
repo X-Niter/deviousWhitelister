@@ -38,7 +38,7 @@ async function getInstance(instanceName) {
         if (!sessionId.data.success) {
             console.log("Login failed")
             //log failed login to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 42\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 41\n`)
             clearTimeout(timeout);
             return;
         }
@@ -49,7 +49,7 @@ async function getInstance(instanceName) {
         return GUID[0][1].InstanceID
     } catch (error) {
         //log error to file
-        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 56\n`)
+        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 52\n`)
         console.log(error);
     }
 }
@@ -67,7 +67,7 @@ async function sendToInstance(GUID, message) {
         if (!sessionId.data.success) {
             clearTimeout(timeout);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 63\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 70\n`)
             console.log("Failed to log into API")
             return;
         }
@@ -82,7 +82,7 @@ async function sendToInstance(GUID, message) {
         if (!instanceSessionId.data.success) {
             clearTimeout(timeout);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 78\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 85\n`)
             console.log("Failed to log into API")
             return;
         }
@@ -93,7 +93,7 @@ async function sendToInstance(GUID, message) {
         return response.data
     } catch (error) {
         //log error to file
-        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 89\n`)
+        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 96\n`)
         console.log(error);
     }
 }
@@ -140,7 +140,7 @@ client.on('interactionCreate', async interaction => {
         const command = client.commands.get(interaction.commandName)
         if (!command) {
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in index.js at line 145\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in index.js at line 143\n`)
             console.log(interaction);
         }
         try {
@@ -148,7 +148,7 @@ client.on('interactionCreate', async interaction => {
         } catch (error) {
             console.error(error);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 144\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 151\n`)
             await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
         }
     }
@@ -158,7 +158,7 @@ client.on('interactionCreate', async interaction => {
             command.onSelect(interaction);
         } catch (error) {
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 154\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 161\n`)
             console.log(error);
         }
     }

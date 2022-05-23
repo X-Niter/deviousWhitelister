@@ -36,7 +36,7 @@ async function fixWhitelist(user, userID, instanceName) {
             if (!sessionId.data.success) {
                 console.log("Login failed")
                 //log failed login to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 41\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 49\n`)
                 clearTimeout(timeout);
                 return;
             }
@@ -47,7 +47,7 @@ async function fixWhitelist(user, userID, instanceName) {
             return GUID[0][1].InstanceID
         } catch (error) {
             //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 52\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 50\n`)
             console.log(error);
         }
     }
@@ -65,7 +65,7 @@ async function fixWhitelist(user, userID, instanceName) {
             if (!sessionId.data.success) {
                 clearTimeout(timeout);
                 //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 70\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 68\n`)
                 console.log("Failed to log into API")
                 return;
             }
@@ -80,7 +80,7 @@ async function fixWhitelist(user, userID, instanceName) {
             if (!instanceSessionId.data.success) {
                 clearTimeout(timeout);
                 //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 85\n`)
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 83\n`)
                 console.log("Failed to log into API")
                 return;
             }
@@ -91,7 +91,7 @@ async function fixWhitelist(user, userID, instanceName) {
             return response.data
         } catch (error) {
             //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 96\n`)
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 94\n`)
             console.log(error);
         }
     }
@@ -131,8 +131,11 @@ module.exports = {
                     .setPlaceholder("Select a server")
                     .addOptions(constructJSON())
             )
-        interaction.reply("check your dms!");
-        interaction.user.send({ ephemeral: true , content: 'Please select the server you wish to fix your whitelist on', components: [row] });
+        interaction.user.send({content: 'Please select the server you wish to fix your whitelist on', components: [row] }).then(() => {
+            interaction.reply({ephemeral: true, content: "check your dms!"});
+        }).catch(err => {
+            interaction.reply({ephemeral: true, content: "I couldn't send you a dm!, perhaps your dms are closed, you can open them by going into the server privacy settings and enabling dms, here is a video for reference https://streamable.com/h71d3h"});
+        })
     },
     async onSelect(interaction) {
         const values = interaction.values.toString().split(',')
