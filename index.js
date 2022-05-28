@@ -7,7 +7,7 @@ client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 const db = require('better-sqlite3')('users.db');
 const axios = require('axios').default;
-const API = `${process.env.AMPIP}`;
+const API = `${process.env.AMPIP}/API`;
 
 //initialize log file if it doesn't already exist
 if (!fs.existsSync('./log.txt')) {
