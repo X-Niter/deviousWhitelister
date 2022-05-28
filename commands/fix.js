@@ -3,6 +3,7 @@ const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 const fs = require('fs');
 const axios = require('axios').default;
 const db = require('better-sqlite3')('users.db');
+// Global API Reference for the whole class
 const API = `${process.env.AMPIP}/API`;
 
 const source = axios.CancelToken.source();
@@ -25,7 +26,6 @@ function retrieveFromDb(queryString) {
 async function fixWhitelist(user, userID, instanceName) {
 
     async function getInstance(instanceName) {
-        //const API = `http://${process.env.AMPIP}/API`
         try {
             let sessionId = await axios.post(API + "/Core/Login", {
                 username: process.env.AMP_USER,

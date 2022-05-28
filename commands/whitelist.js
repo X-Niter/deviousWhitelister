@@ -23,7 +23,6 @@ function retrieveFromDb(queryString) {
 async function whitelist(user, userID, instanceName) {
 
     async function getInstance(instanceName) {
-        //const API = `http://${process.env.AMPIP}/API`
         try {
             let sessionId = await axios.post(API + "/Core/Login", {
                 username: process.env.AMP_USER,
@@ -52,7 +51,6 @@ async function whitelist(user, userID, instanceName) {
     }
 
     async function sendToInstance(GUID, message) {
-        //const API = `http://${process.env.AMPIP}/API`
         try {
             let sessionId = await axios.post(API + "/Core/Login", {
                 username: process.env.AMP_USER,
