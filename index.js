@@ -7,6 +7,7 @@ client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 const db = require('better-sqlite3')('users.db');
 const axios = require('axios').default;
+const API = `${process.env.AMPIP}`;
 
 //initialize log file if it doesn't already exist
 if (!fs.existsSync('./log.txt')) {
@@ -26,7 +27,7 @@ const timeout = setTimeout(() => {
 }, 15*1000);
 
 async function getInstance(instanceName) {
-    const API = `http://${process.env.AMPIP}/API`
+    //const API = `${process.env.AMPIP}/API`
     try {
         let sessionId = await axios.post(API + "/Core/Login", {
             username: process.env.AMP_USER,
@@ -55,7 +56,7 @@ async function getInstance(instanceName) {
 }
 
 async function sendToInstance(GUID, message) {
-    const API = `http://${process.env.AMPIP}/API`
+    //const API = `http://${process.env.AMPIP}/API`
     try {
         let sessionId = await axios.post(API + "/Core/Login", {
             username: process.env.AMP_USER,
