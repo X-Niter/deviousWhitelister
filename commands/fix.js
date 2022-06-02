@@ -22,15 +22,15 @@ function retrieveFromDb(queryString) {
     return query
 }
 
-async function fixWhitelist(user, userID, instanceName) {
-    const GUID = await getInstance(instanceName)
+async function fixWhitelist(user, userID, API,instanceName) {
+    const GUID = await getInstance(instanceName, API)
     //find username using the userId from the database
     const username = retrieveFromDb(`SELECT name FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     if(!username) {
         return 404
     }
-    await sendToInstance(GUID, `whitelist remove ${username}`)
-    await sendToInstance(GUID, `whitelist add ${user}`)
+    await sendToInstance(GUID, `whitelist remove ${username}`, API)
+    await sendToInstance(GUID, `whitelist add ${user}`, API)
     //replace the information in the database with the new information
     insertToDb(`DELETE FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     insertToDb(`INSERT INTO users VALUES ('${userID}', '${user}', '${instanceName}')`)

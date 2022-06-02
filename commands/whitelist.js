@@ -21,13 +21,13 @@ function retrieveFromDb(queryString) {
 }
 //this big ass function is what contacts the API and sends the request for the user to be added to the whitelist
 async function whitelist(user, userID, API, instanceName) {
-    const GUID = await getInstance(instanceName)
+    const GUID = await getInstance(instanceName,API)
     //check if user is already in the database
     let userData = retrieveFromDb(`SELECT * FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     if (userData) {
         return 409 //user is already in the database, return an error code
     }
-    await sendToInstance(GUID, `whitelist add ${user}`)
+    await sendToInstance(GUID, `whitelist add ${user}`,API)
     //append user to a json file called users.json
     insertToDb(`INSERT OR REPLACE INTO users VALUES ('${userID}', '${user}', '${instanceName}')`)
     return //it's an async function, it always returns a promise, this makes sure that the promise gets resolved

@@ -1,7 +1,7 @@
 //not actually a wrapper but couldn't find a name more fit for this
 
 //gets the instance GUID out of the instance name
-async function getInstance(instanceName) {
+async function getInstance(instanceName, API) {
     try {
         let sessionId = await axios.post(API + "/Core/Login", {
             username: process.env.AMP_USER,
@@ -30,7 +30,7 @@ async function getInstance(instanceName) {
     }
 }
 
-async function sendToInstance(GUID, message) {
+async function sendToInstance(GUID, message, API) {
     //things get wierd here, in order to send a message to the instance we need to login into AMP and the ADS instance, that's why we need to do two requests for authentication
     try {
         let sessionId = await axios.post(API + "/Core/Login", {
