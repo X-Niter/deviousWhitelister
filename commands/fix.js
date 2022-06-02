@@ -3,8 +3,7 @@ const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 const fs = require('fs');
 const axios = require('axios').default;
 const db = require('better-sqlite3')('users.db');
-// Global API Reference for the whole class
-const API = `${process.env.AMPIP}/API`;
+const {getInstance, sendToInstance} = require('../ampWrapper.js')
 
 const source = axios.CancelToken.source();
 const timeout = setTimeout(() => {
@@ -23,88 +22,15 @@ function retrieveFromDb(queryString) {
     return query
 }
 
-async function fixWhitelist(user, userID, instanceName) {
-
-    async function getInstance(instanceName) {
-        try {
-            let sessionId = await axios.post(API + "/Core/Login", {
-                username: process.env.AMP_USER,
-                password: process.env.AMP_PASSWORD,
-                token: "",
-                rememberMe: false,
-                cancelToken: source.token
-            }, { Accept: "text / javascript" })
-            if (!sessionId.data.success) {
-                console.log("Login failed")
-                //log failed login to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 49\n`)
-                clearTimeout(timeout);
-                return;
-            }
-            clearTimeout(timeout);
-            sessionId = sessionId.data.sessionID
-            let response = await axios.post(API + "/ADSModule/GetInstances", { SESSIONID: sessionId })
-            let GUID = Object.entries(response.data.result[0].AvailableInstances).filter(instance => instance[1].InstanceName === instanceName)
-            return GUID[0][1].InstanceID
-        } catch (error) {
-            //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 50\n`)
-            console.log(error);
-        }
-    }
-
-    async function sendToInstance(GUID, message) {
-        const API = `http://${process.env.AMPIP}/API`
-        try {
-            let sessionId = await axios.post(API + "/Core/Login", {
-                username: process.env.AMP_USER,
-                password: process.env.AMP_PASSWORD,
-                token: "",
-                rememberMe: false,
-                cancelToken: source.token
-            }, { Accept: "text / javascript" })
-            if (!sessionId.data.success) {
-                clearTimeout(timeout);
-                //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 68\n`)
-                console.log("Failed to log into API")
-                return;
-            }
-            clearTimeout(timeout);
-            let instanceSessionId = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/Login`, {
-                username: process.env.AMP_USER,
-                password: process.env.AMP_PASSWORD,
-                token: "",
-                rememberMe: false,
-                cancelToken: source.token
-            }, { Accept: "text / javascript", SESSIONID: sessionId })
-            if (!instanceSessionId.data.success) {
-                clearTimeout(timeout);
-                //log to file
-                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in fix.js at line 83\n`)
-                console.log("Failed to log into API")
-                return;
-            }
-
-            instanceSessionId = instanceSessionId.data.sessionID
-            let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId, cancelToken: source.token})
-            clearTimeout(timeout);
-            return response.data
-        } catch (error) {
-            //log error to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in fix.js at line 94\n`)
-            console.log(error);
-        }
-    }
-
-    const GUID = await getInstance(instanceName)
+async function fixWhitelist(user, userID, API,instanceName) {
+    const GUID = await getInstance(instanceName, API)
     //find username using the userId from the database
     const username = retrieveFromDb(`SELECT name FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     if(!username) {
         return 404
     }
-    await sendToInstance(GUID, `whitelist remove ${username}`)
-    await sendToInstance(GUID, `whitelist add ${user}`)
+    await sendToInstance(GUID, `whitelist remove ${username}`, API)
+    await sendToInstance(GUID, `whitelist add ${user}`, API)
     //replace the information in the database with the new information
     insertToDb(`DELETE FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     insertToDb(`INSERT INTO users VALUES ('${userID}', '${user}', '${instanceName}')`)

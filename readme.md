@@ -16,12 +16,12 @@ clone this repo, extract it anywhere, make sure you have node.js (latest), open 
     {
         "label": "friendly name",
         "description": "brief description",
-        "value": "AMP INSTANCE NAME"
+        "value": "AMP INSTANCE NAME,AMP INSTANCE API IP"
     },
         {
         "label": "another name",
         "description": "another brief description",
-        "value": "AMP INSTANCE NAME"
+        "value": "AMP INSTANCE NAME, ANOTHER AMP INSTANCE API IP"
     }
 ]
  ```
@@ -37,6 +37,5 @@ clone this repo, extract it anywhere, make sure you have node.js (latest), open 
  - DISCORD_TOKEN: discord token for the bot
  - AMP_USER: username for the amp user that the bot manages
  - AMP_PASSWORD: the password for the amp account that the bot manages
- - AMPIP: ip:port of the amp server admin panel, for example: 127.0.0.1:8080
  - CLIENTID: client id of the bot
  - GUILDID: guild id where the bot will work
