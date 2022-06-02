@@ -3,6 +3,7 @@ require('./register-commands')
 const fs = require('fs')
 const { Client, Collection, Intents } = require("discord.js")
 const client = new Client({ intents: [Intents.FLAGS.GUILD_PRESENCES,Intents.FLAGS.GUILD_MESSAGES,Intents.FLAGS.GUILD_MEMBERS,Intents.FLAGS.GUILDS,Intents.FLAGS.DIRECT_MESSAGES] , partials: ['CHANNEL']});
+//make a collection of commands in the client, scan for commands and for each commands that ends in .js add to the collection
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 const db = require('better-sqlite3')('users.db');
@@ -22,91 +23,27 @@ process.on('uncaughtException', (err) => {
 })
 
 const source = axios.CancelToken.source();
+//axios timeout request in case an infinite yeld on a api request
 const timeout = setTimeout(() => {
   source.cancel();
   // Timeout Logic
 }, 15*1000);
 
-async function getInstance(instanceName) {
-    try {
-        let sessionId = await axios.post(API + "/Core/Login", {
-            username: process.env.AMP_USER,
-            password: process.env.AMP_PASSWORD,
-            token: "",
-            rememberMe: false,
-            cancelToken: source.token
-        }, { Accept: "text / javascript" })
-        if (!sessionId.data.success) {
-            console.log("Login failed")
-            //log failed login to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in whitelist.js at line 41\n`)
-            clearTimeout(timeout);
-            return;
-        }
-        clearTimeout(timeout);
-        sessionId = sessionId.data.sessionID
-        let response = await axios.post(API + "/ADSModule/GetInstances", { SESSIONID: sessionId })
-        let GUID = Object.entries(response.data.result[0].AvailableInstances).filter(instance => instance[1].InstanceName === instanceName)
-        return GUID[0][1].InstanceID
-    } catch (error) {
-        //log error to file
-        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 52\n`)
-        console.log(error);
-    }
-}
+//FIXME code for removing users from the whitelist when they leave the server is no longer here, add it back when you find a possible solution
 
-async function sendToInstance(GUID, message) {
-    try {
-        let sessionId = await axios.post(API + "/Core/Login", {
-            username: process.env.AMP_USER,
-            password: process.env.AMP_PASSWORD,
-            token: "",
-            rememberMe: false,
-            cancelToken: source.token
-        }, { Accept: "text / javascript" })
-        if (!sessionId.data.success) {
-            clearTimeout(timeout);
-            //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 70\n`)
-            console.log("Failed to log into API")
-            return;
-        }
-        clearTimeout(timeout);
-        let instanceSessionId = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/Login`, {
-            username: process.env.AMP_USER,
-            password: process.env.AMP_PASSWORD,
-            token: "",
-            rememberMe: false,
-            cancelToken: source.token
-        }, { Accept: "text / javascript", SESSIONID: sessionId })
-        if (!instanceSessionId.data.success) {
-            clearTimeout(timeout);
-            //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in index.js at line 85\n`)
-            console.log("Failed to log into API")
-            return;
-        }
 
-        instanceSessionId = instanceSessionId.data.sessionID
-        let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId, cancelToken: source.token})
-        clearTimeout(timeout);
-        return response.data
-    } catch (error) {
-        //log error to file
-        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 96\n`)
-        console.log(error);
-    }
-}
-
+//i will still store the user id in the database however
 async function insertToDb(queryString){
     let query = await db.prepare(queryString).run()
     return query
 }
 
+//no longer used yet, but will be used in the future
+/*
 function retrieveFromDb(queryString) {
     let query = db.prepare(queryString).all()
     return query
-}
+}*/
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
@@ -118,9 +55,12 @@ client.on("ready", async () => {
 })
 
 client.on('guildMemberRemove', async member => {
+    //FIXME no longer working, needs to be recoded
+    /*
     //when a member leaves the server, it get's it's whitelist removed from database and from all the servers
     //first, fetch the servers the user is in from the database
     let users = await retrieveFromDb(`SELECT * FROM users WHERE id = '${member.id}'`)
+    
     console.log(users)
     //then, send a request to each server to remove the user from the whitelist
     users.forEach(async (key) => {
@@ -131,11 +71,12 @@ client.on('guildMemberRemove', async member => {
         await sendToInstance(GUID, `whitelist remove ${key.name}`)
     })
     //lastly, remove the user from the database
+    */
     await insertToDb(`DELETE FROM users WHERE id = '${member.id}'`)
-    console.log(`all done`)
 })
 
 client.on('interactionCreate', async interaction => {
+    //interaction executer and error handling
     if (interaction.isCommand()) {
         const command = client.commands.get(interaction.commandName)
         if (!command) {
