@@ -29,5 +29,6 @@ const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
         console.log('Successfully reloaded application (/) commands.');
     } catch (error) {
         console.error(error);
+        console.error("Failed to register Discord slash commands, is the bot configured correctly?");
     }
 })();
