@@ -1,3 +1,7 @@
+const fs = require('fs')
+const axios = require('axios').default;
+
+
 //not actually a wrapper but couldn't find a name more fit for this
 
 //gets the instance GUID out of the instance name
@@ -8,7 +12,7 @@ async function getInstance(instanceName, API) {
             password: process.env.AMP_PASSWORD,
             token: "",
             rememberMe: false,
-            cancelToken: source.token
+            cancelToken: this.token
         }, { Accept: "text / javascript" })
         if (!sessionId.data.success) {
             console.log("Login failed")
