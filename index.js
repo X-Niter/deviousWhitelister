@@ -39,12 +39,10 @@ async function insertToDb(queryString){
     return query
 }
 
-//no longer used yet, but will be used in the future
-/*
 function retrieveFromDb(queryString) {
     let query = db.prepare(queryString).all()
     return query
-}*/
+}
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
