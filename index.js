@@ -10,6 +10,7 @@ const db = require('better-sqlite3')('users.db');
 const axios = require('axios').default;
 // Global API Reference for the whole class
 const API = `${process.env.AMPIP}/API`;
+const {getInstance, sendToInstance} = require('./ampWrapper.js')
 
 //initialize log file if it doesn't already exist
 if (!fs.existsSync('./log.txt')) {
@@ -54,26 +55,24 @@ client.on("ready", async () => {
     console.log("bot is ready to roll")
 })
 
+//UNTESTED CODE
+//----------------------------------------------
 client.on('guildMemberRemove', async member => {
-    //FIXME no longer working, needs to be recoded
-    /*
-    //when a member leaves the server, it get's it's whitelist removed from database and from all the servers
-    //first, fetch the servers the user is in from the database
+    function findInJson(instanceName){
+        let servers = JSON.parse(fs.readFileSync('./servers.json'))
+        let server = servers.find(server => server.value.toString().split(',')[0] === instanceName)
+        return server
+    }
     let users = await retrieveFromDb(`SELECT * FROM users WHERE id = '${member.id}'`)
-    
-    console.log(users)
-    //then, send a request to each server to remove the user from the whitelist
-    users.forEach(async (key) => {
-        console.log(`server db: ${key}`)
-        //get the instance GUID
-        let GUID = await getInstance(key.server)
-        //send the request
-        await sendToInstance(GUID, `whitelist remove ${key.name}`)
+    users.forEach(async (user) => {
+        let api = findInJson(user.server)
+        let GUID = await getInstance(user.server, api)
+        await sendToInstance(GUID, `whitelist remove ${user.name}`,api)
     })
-    //lastly, remove the user from the database
-    */
+    
     await insertToDb(`DELETE FROM users WHERE id = '${member.id}'`)
 })
+//----------------------------------------------
 
 client.on('interactionCreate', async interaction => {
     //interaction executer and error handling
