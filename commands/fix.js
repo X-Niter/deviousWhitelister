@@ -66,13 +66,14 @@ module.exports = {
     },
     async onSelect(interaction) {
         const values = interaction.values.toString().split(',')
-        await interaction.update({ content: `you have selected ${values[1]}`, components: [] });
+        await interaction.update({ content: `you have selected ${values[2]}`, components: [] });
         let start = await interaction.user.send({ content: `send me your new minecraft username` });
         let filter = m => m.author.id === interaction.user.id
         start.channel.createMessageCollector({ filter , time: 60000, max: 1 }).on('collect', async (m) => {
+            await interaction.user.send({ content: `working on it, give me a minute...`})
             let username = m.content;
             let user = interaction.user.id
-            let err = await fixWhitelist(username, user, values[0]);
+            let err = await fixWhitelist(username, user, values[1], values[0]);
             if (err == 404){
                 interaction.user.send({ content: `${username} is not in the database, did you select the wrong server, or perhaps you want to whitelist instead`});
             }else {
