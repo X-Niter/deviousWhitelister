@@ -1,14 +1,9 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageActionRow, MessageSelectMenu } = require('discord.js');
 const fs = require('fs');
-const axios = require('axios').default;
 const db = require('better-sqlite3')('users.db');
 const {getInstance, sendToInstance} = require('../ampWrapper')
-const source = axios.CancelToken.source();
-const timeout = setTimeout(() => {
-  source.cancel();
-  // Timeout Logic
-}, 15*1000);
+
 
 async function insertToDb(queryString){
     let query = await db.prepare(queryString).run()
@@ -70,13 +65,14 @@ module.exports = {
         let start = await interaction.user.send({ content: `Send me your Minecraft username.` });
         let filter = m => m.author.id === interaction.user.id
         start.channel.createMessageCollector({ filter , time: 60000,  max: 1 }).on('collect', async (m) => {
+            await interaction.user.send({ content: `working on it, give me a minute...`})
             let username = m.content;
             let user = interaction.user.id
             let err = await whitelist(username, user, values[1], values[0]);
             if (err === 409) {
-                await interaction.user.send({ content: `You're already whitelisted on ${values[2]}, perhaps you want to fix your whitelist?` });
+                await interaction.user.send({ content: `you are already whitelisted in ${values[2]}, perhaps you want to fix your whitelist?` });
             }else {
-                await interaction.user.send({ content: `You've been whitelisted on ${values[2]}` });
+                await interaction.user.send({ content: `you have been whitelisted in ${values[2]}` });
             }
         })
     }

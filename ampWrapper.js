@@ -3,7 +3,13 @@ const axios = require('axios').default;
 
 
 //not actually a wrapper but couldn't find a name more fit for this
-
+const fs = require('fs');
+const axios = require('axios').default;
+const source = axios.CancelToken.source();
+const timeout = setTimeout(() => {
+  source.cancel();
+  // Timeout Logic
+}, 15*1000);
 //gets the instance GUID out of the instance name
 async function getInstance(instanceName, API) {
     try {
@@ -12,8 +18,8 @@ async function getInstance(instanceName, API) {
             password: process.env.AMP_PASSWORD,
             token: "",
             rememberMe: false,
-            cancelToken: this.token
-        }, { Accept: "text / javascript" })
+            cancelToken: source.token
+        }, { headers: {Accept: "text/javascript"} })
         if (!sessionId.data.success) {
             console.log("Login failed")
             //log failed login to file
