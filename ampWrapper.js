@@ -1,7 +1,3 @@
-const fs = require('fs')
-const axios = require('axios').default;
-
-
 //not actually a wrapper but couldn't find a name more fit for this
 const fs = require('fs');
 const axios = require('axios').default;
@@ -10,6 +6,7 @@ const timeout = setTimeout(() => {
   source.cancel();
   // Timeout Logic
 }, 15*1000);
+
 //gets the instance GUID out of the instance name
 async function getInstance(instanceName, API) {
     try {
@@ -35,42 +32,50 @@ async function getInstance(instanceName, API) {
         return GUID[0][1].InstanceID
     } catch (error) {
         //log error to file
-        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in ampWrapper.js\n`)
+        fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in getInstance#ampWrapper.js\n`)
         console.log(error);
     }
 }
 
+// AMP Instance interaction function
 async function sendToInstance(GUID, message, API) {
-    //things get wierd here, in order to send a message to the instance we need to login into AMP and the ADS instance, that's why we need to do two requests for authentication
+    // Attempt authorization to AMP panel
+    let sessionId = null;
+    let instanceSessionId = null;
+
     try {
-        let sessionId = await axios.post(API + "/Core/Login", {
+            sessionId = await axios.post(API + "/Core/Login", {
             username: process.env.AMP_USER,
             password: process.env.AMP_PASSWORD,
             token: "",
             rememberMe: false,
             cancelToken: source.token
         }, { Accept: "text / javascript" })
-        if (!sessionId.data.success) {
+
+        // Checking for successfull AMP auth before moving on to AMP Instance auth
+        if (sessionId.data.success) {
             clearTimeout(timeout);
-            //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in ampWrapper.js\n`)
-            console.log("Failed to log into API")
-            return;
-        }
-        clearTimeout(timeout);
-        //second auth layer for the ADS instance
-        let instanceSessionId = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/Login`, {
-            username: process.env.AMP_USER,
-            password: process.env.AMP_PASSWORD,
-            token: "",
-            rememberMe: false,
-            cancelToken: source.token
-        }, { Accept: "text / javascript", SESSIONID: sessionId })
-        if (!instanceSessionId.data.success) {
+                instanceSessionId = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/Login`, {
+                username: process.env.AMP_USER,
+                password: process.env.AMP_PASSWORD,
+                token: "",
+                rememberMe: false,
+                cancelToken: source.token
+            }, { Accept: "text / javascript", SESSIONID: sessionId })
+
+            if (!instanceSessionId.data.success) {
+                clearTimeout(timeout);
+                //log to file
+                fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: AMP Instance Login failed for ${user} (${userID}) in ampWrapper.js\n`)
+                console.log("Failed to log into AMP Instance API")
+                return;
+            }
+
+        } else {
             clearTimeout(timeout);
-            //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Login failed for ${user} (${userID}) in ampWrapper.js\n`)
-            console.log("Failed to log into API")
+            //log AMP auth fail
+            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: AMP Login failed for ${user} (${userID}) in ampWrapper.js\n`)
+            console.error("Failed to log into AMP API")
             return;
         }
 
