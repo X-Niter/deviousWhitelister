@@ -1,3 +1,5 @@
+#ENV-File
+.env
 # Logs
 logs
 *.log

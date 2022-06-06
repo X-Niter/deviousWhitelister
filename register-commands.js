@@ -17,17 +17,17 @@ for (const file of commandFiles) {
 
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
 
-(async () => {
+(async() => {
     try {
         console.log('Started refreshing application (/) commands.');
 
         await rest.put(
-            Routes.applicationGuildCommands(clientId, guildId),
-            { body: commands },
+            Routes.applicationGuildCommands(clientId, guildId), { body: commands },
         );
 
         console.log('Successfully reloaded application (/) commands.');
     } catch (error) {
         console.error(error);
+        console.error("Failed to register Discord slash commands, is the bot configured correctly?");
     }
 })();
