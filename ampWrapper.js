@@ -6,7 +6,6 @@ const timeout = setTimeout(() => {
     source.cancel();
     // Timeout Logic
 }, 15 * 1000);
-
 //gets the instance GUID out of the instance name
 async function getInstance(instanceName, API) {
     try {

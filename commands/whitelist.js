@@ -1,6 +1,4 @@
-const {
-    SlashCommandBuilder
-} = require('@discordjs/builders');
+const { SlashCommandBuilder } = require('@discordjs/builders');
 const {
     MessageActionRow,
     MessageSelectMenu,
@@ -8,10 +6,7 @@ const {
 } = require('discord.js');
 const fs = require('fs');
 const db = require('better-sqlite3')('users.db');
-const {
-    getInstance,
-    sendToInstance
-} = require('../ampWrapper')
+const { getInstance, sendToInstance } = require('../ampWrapper')
 
 
 async function insertToDb(queryString) {
@@ -24,7 +19,7 @@ function retrieveFromDb(queryString) {
     return query
 }
 
-// .json server list parser/constructor
+// .json server list parser
 function constructJSON() {
     let servers
     servers = JSON.parse(fs.readFileSync('./servers.json', 'utf8'))

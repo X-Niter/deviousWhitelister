@@ -1,15 +1,7 @@
 require('dotenv').config()
 require('./register-commands')
 const fs = require('fs')
-const {
-    Client,
-    Collection,
-    Intents,
-    MessageActionRow,
-    MessageSelectMenu,
-    MessageEmbed,
-    Message
-} = require("discord.js")
+const { Client, Collection, Intents, MessageActionRow, MessageSelectMenu, MessageEmbed, Message } = require("discord.js")
 const client = new Client({
     intents: [Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.DIRECT_MESSAGES],
     partials: ['CHANNEL']
@@ -22,11 +14,7 @@ const db = require('better-sqlite3')('users.db');
 const axios = require('axios').default;
 // Global API Reference for the whole class
 const API = `${process.env.AMPIP}/API`;
-
-const {
-    getInstance,
-    sendToInstance
-} = require('./ampWrapper.js')
+const { getInstance, sendToInstance } = require('./ampWrapper.js')
 
 //initialize log file if it doesn't already exist
 if (!fs.existsSync('./log.txt')) {
@@ -63,7 +51,7 @@ for (const file of commandFiles) {
     client.commands.set(command.data.name, command);
 }
 
-// .json server list parser/constructor
+// .json server list parser
 function constructJSON() {
     let servers
     servers = JSON.parse(fs.readFileSync('./servers.json', 'utf8'))
@@ -77,7 +65,7 @@ client.on("ready", async() => {
     const channel = client.channels.cache.get(`${process.env.MenuChannelID}`);
     const embed = new MessageEmbed().setTitle("Select the server you wish to be white listed on");
 
-    setTimeout(() => Message.delete(), 1);
+    //setTimeout(() => Message.delete(), 1);
 
     const row = new MessageActionRow().addComponents(
         new MessageSelectMenu()
@@ -118,7 +106,7 @@ client.on('interactionCreate', async interaction => {
         const command = client.commands.get(interaction.commandName)
         if (!command) {
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in index.js at line 143\n`)
+            appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in index.js at line 143\n`)
             console.log(interaction);
         }
         try {
@@ -126,7 +114,7 @@ client.on('interactionCreate', async interaction => {
         } catch (error) {
             console.error(error);
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 151\n`)
+            appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 151\n`)
             await interaction.reply({
                 content: 'There was an error while executing this command!',
                 ephemeral: true
@@ -139,7 +127,7 @@ client.on('interactionCreate', async interaction => {
             command.onSelect(interaction);
         } catch (error) {
             //log to file
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 96\n`)
+            appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 96\n`)
             console.log(error);
         }
     }
