@@ -1,103 +1,133 @@
 require('dotenv').config()
 require('./register-commands')
 const fs = require('fs')
-const { Client, Collection, Intents, MessageActionRow, MessageSelectMenu, MessageEmbed, Message } = require("discord.js")
+const { Client, Collection, Intents, MessageActionRow, MessageSelectMenu, MessageEmbed, MessageButton } = require("discord.js")
 const client = new Client({
     intents: [Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS, Intents.FLAGS.DIRECT_MESSAGES],
-    partials: ['CHANNEL']
+    partials: ['MESSAGE', 'CHANNEL']
 });
 
 //make a collection of commands in the client, scan for commands and for each commands that ends in .js add to the collection
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-const db = require('better-sqlite3')('users.db');
-const axios = require('axios').default;
-// Global API Reference for the whole class
-const API = `${process.env.AMPIP}/API`;
+const {insertToDb, retrieveFromDb, retrieveAllFromDb, constructJSON, FileLogger, projectName} = require('./utils.js')
 const { getInstance, sendToInstance } = require('./ampWrapper.js')
+const menuHandler = require("./menuHandler.js")
+const handle = new menuHandler(client,MessageEmbed,MessageActionRow,MessageSelectMenu,MessageButton,constructJSON)
 
-//initialize log file if it doesn't already exist
-if (!fs.existsSync('./log.txt')) {
-    fs.writeFileSync('./log.txt', '');
-}
 
 //uncaught exception handler
 process.on('uncaughtException', (err) => {
     console.log(err);
-    fs.appendFileSync('./log.txt', `Uncaught Exception at: ${new Date().toLocaleString()}: ${err}\n`)
+    FileLogger("latest", "error", `Uncaught Exception at: ${err}`)
 })
-
-const source = axios.CancelToken.source();
-//axios timeout request in case an infinite yeld on a api request
-const timeout = setTimeout(() => {
-    source.cancel();
-    // Timeout Logic
-}, 15 * 1000);
-
-
-//Store user data in the sqlite database
-async function insertToDb(queryString) {
-    let query = await db.prepare(queryString).run()
-    return query
-}
-
-function retrieveFromDb(queryString) {
-    let query = db.prepare(queryString).all()
-    return query
-}
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.data.name, command);
 }
 
-// .json server list parser
-function constructJSON() {
-    let servers
-    servers = JSON.parse(fs.readFileSync('./servers.json', 'utf8'))
-    servers.forEach(server => {
-        server.value = server.value + "," + server.label
-    })
-    return servers
-}
+client.on("ready", async() => { 
+    try {
+        await handle.handle()
+    } catch (error) {
+        FileLogger("latest", "fatal", `Could not send whitelist menu and button to channel in index.js at line 32 \n STACK TRACE: \n ${error}`)
+        console.error(error)
+    }  
 
-client.on("ready", async() => {
-    const channel = client.channels.cache.get(`${process.env.MenuChannelID}`);
-    const embed = new MessageEmbed().setTitle("Select the server you wish to be white listed on");
-
-    //setTimeout(() => Message.delete(), 1);
-
-    const row = new MessageActionRow().addComponents(
-        new MessageSelectMenu()
-        .setCustomId("whitelist")
-        .setPlaceholder("Select a server")
-        .addOptions(constructJSON())
-    )
-    channel.send({
-        embeds: [embed],
-        components: [row]
-    })
-    console.warn("Devious Whitelister Discord Bot Copyright (C) 2022 By:M1so/X_Niter \n (GNU GENERAL PUBLIC LICENSE)[Version 3, 29 June 2007] \n This program comes with ABSOLUTELY NO WARRANTY; \n This is free software, and you are welcome to do as you please under one condition, \n Proper credit be given by documenting our names for the work we have done.");
-    console.info("Whitelist Bot loaded Succesfully")
+    console.info("\nDevious Whitelister Discord Bot Copyright (C) 2022 By:M1so/X_Niter \n (GNU GENERAL PUBLIC LICENSE)[Version 3, 29 June 2007] \n This program comes with ABSOLUTELY NO WARRANTY; \n This is free software, and you are welcome to do as you please under one condition, \n Proper credit be given by documenting our names for the work we have done. \n");
+    console.info("Whitelist Bot loaded Succesfully") //RIP "bot is ready to roll"
+    FileLogger("latest", "info", `${projectName} Bot loaded Succesfully!`)
+    FileLogger("whitelist", "info", `${projectName} loaded and ready to whitelist!`)
 })
 
 //User leaves discord, remove them from whitelist, DB, and kick them from server just incase they are on it
 client.on('guildMemberRemove', async member => {
-    let users = await retrieveFromDb(`SELECT * FROM users WHERE id = '${member.id}'`)
 
-    try {
-        users.forEach(async(user) => {
-            let GUID = await getInstance(user.server, user.api)
+    function findInJson(instanceName){ // finds the api url ins server.json equal to instance/serevr name
+        let servers = JSON.parse(fs.readFileSync('./servers.json'))
+        let server = servers.find(server => server.value.toString().split(',')[0] === instanceName)
 
-            await sendToInstance(GUID, `whitelist remove ${user.name}`, user.api)
-            await sendToInstance(GUID, `kick ${user.name} User left Discord Community`, user.api)
-        })
-
-        await insertToDb(`DELETE FROM users WHERE id = '${member.id}'`)
-    } catch (error) {
-        console.error(error);
-        console.error("Error removing user from Devious Network index.js 71-78");
+        //servers get all "value" to string split ',' and if any "value" [0] is equal to instanceName, return the "value" [1]
+        if(server){
+            return server.value.toString().split(',')[1]
+        } else { //if the server is not found, return console.error and FileLogger latest error
+            console.error(`Could not find instance ${instanceName} in servers.json`)
+            FileLogger("latest", "error", `Could not find instance ${instanceName} in servers.json`)
+        }
+        return server
     }
+
+    
+   
+    try {   
+        let allData = retrieveAllFromDb(`SELECT * FROM users WHERE id = ${member.id}`);
+        var success = true;
+    
+        try{
+            allData.forEach( async row => {
+            const minecraftUsername = row.name;
+            const serverName = row.server;
+            const isntanceAPI = findInJson(serverName);
+            try {
+                var GUID = await getInstance(serverName, isntanceAPI);
+            } catch (error) {
+                success = false;
+                console.error(`Failed to get instance ${serverName} @ ${isntanceAPI} index.js line 73\n${error}`)
+                FileLogger("latest", "fatal", `Failed to get instance ${serverName} @ ${isntanceAPI} index.js line 73\n STACK TRACE: \n ${error}`)
+                FileLogger("API", "fatal", `Failed to get instance ${serverName} @ ${isntanceAPI} index.js line 73\n STACK TRACE: \n ${error}`)
+            }
+            try {
+                await sendToInstance(GUID, [`kick ${minecraftUsername} User left the Discord Community`, `whitelist remove ${minecraftUsername}`], isntanceAPI);
+                console.log(`Removing ${minecraftUsername} from ${serverName}`);
+            } catch (error) {
+                success = false;
+                console.error(`Failed sending commands to instance in index.js line 81\n${error}`)
+                FileLogger("latest", "fatal", `Failed sending commands to instance in index.js line 81\n STACK TRACE: \n ${error}`)
+                FileLogger("API", "fatal", `Failed sending commands to instance in index.js line 81\n STACK TRACE: \n ${error}`)
+            }
+            
+            });
+        } catch (error) {
+            success = false;
+            console.error(`Removing [${member}] from instances have failed, potentialy an API login failure \n${error}`)
+            FileLogger("latest", "fatal", `Removing [${member}] from instances have failed, potentialy an API login failure \n${error}`)
+            FileLogger("whitelist", "fatal", `Removing [${member}] from instances have failed, potentialy an API login failure \n${error}`)
+            FileLogger("API", "fatal", `Removing [${member}] from instances have failed, potentialy an API login failure \n${error}`)
+        }
+
+
+    } catch (error) {
+        console.error(`guildMemberRemove Error present for ${member} when attempting to remove them from the Devious servers \n${error}`)
+        FileLogger("latest", "fatal", `guildMemberRemove Error present for ${member} when attempting to remove them from the Devious servers \n${error}`)
+        FileLogger("whitelist", "fatal", `guildMemberRemove Error present for ${member} when attempting to remove them from the Devious servers \n${error}`)
+        FileLogger("API", "fatal", `guildMemberRemove Error present for ${member} when attempting to remove them from the Devious servers \n${error}`)
+    } finally {
+        const dbRemoved = true;
+        
+        if (success) {
+
+            try {
+                insertToDb(`DELETE FROM users WHERE id = ${member.id}`);
+
+                console.log(`Removing the user ${member} from the database`);
+                FileLogger("latest", "info", `Removing [${member}] from the database`)
+                FileLogger("whitelist", "info", `Removing [${member}] from the database`)
+            } catch (error) {
+                dbRemoved = false;
+                
+                console.log(`Failed to remove [${member}] from the database`);
+                FileLogger("latest", "error", `Failed to remove [${member}] from the database`)
+                FileLogger("whitelist", "error", `Failed to remove [${member}] from the database`)
+            }
+        } else {
+            console.error(`Removing [${member}] from servers was not successful, please check logs`)
+            FileLogger("latest", "fatal", `Removing [${member}] from servers was not successful, please check logs \n${error}`)
+            FileLogger("whitelist", "fatal", `Removing [${member}] from servers was not successful, please check logs \n${error}`)
+        }
+    }
+
+
 })
 
 client.on('interactionCreate', async interaction => {
@@ -106,17 +136,17 @@ client.on('interactionCreate', async interaction => {
         const command = client.commands.get(interaction.commandName)
         if (!command) {
             //log to file
-            appendFileSync('./log.txt', `${new Date().toLocaleString()}: Command ${interaction.commandName} not found in index.js at line 143\n`)
-            console.log(interaction);
+            FileLogger("latest", "fatal", `Commands not found in index.js \n STACK TRACE \n Command Names that were not found: ${interaction.commandName}`)
+            console.error(interaction);
         }
         try {
             await command.execute(interaction);
         } catch (error) {
             console.error(error);
-            //log to file
-            appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 151\n`)
+            //Log errors
+            FileLogger("latest", "fatal", `Could not execute command interaction in index.js Line 81 \n STACK TRACE \n ${error}`)
             await interaction.reply({
-                content: 'There was an error while executing this command!',
+                content: 'Error executing this command!',
                 ephemeral: true
             });
         }
@@ -124,10 +154,36 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isSelectMenu()) {
         try {
             const command = client.commands.get(interaction.customId)
-            command.onSelect(interaction);
+            //await interaction.deferUpdate()
+            await command.onSelect(interaction);
+            try {
+                await handle.handle()
+            } catch (error) {
+                FileLogger("latest", "fatal", `Could not send whitelist menu and button to channel in index.js at line 32 \n STACK TRACE: \n ${error}`)
+                console.error(error)
+            }  
         } catch (error) {
-            //log to file
-            appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in index.js at line 96\n`)
+            //Log errors
+            console.error("Menu Selection failed in index.js Line 95-96");
+            FileLogger("latest", "error", `Menu Selection failed in index.js Line 95-96 \n STACK TRACE \n ${error}`);
+            console.log(error);
+        }
+    }
+    if (interaction.isButton()) {
+        try {
+            const command = client.commands.get(interaction.customId);
+            //await interaction.deferUpdate();
+            await command.onButton(interaction);
+            try {
+                await handle.handle()
+            } catch (error) {
+                FileLogger("latest", "fatal", `Could not send whitelist menu and button to channel in index.js at line 32 \n STACK TRACE: \n ${error}`)
+                console.error(error)
+            }  
+        } catch (error) {
+            //Log errors
+            console.error("Button Selection failed in index.js Line 106-107");
+            FileLogger("latest", "error", `Button Selection failed in index.js Line 106-107 \n STACK TRACE \n ${error}`);
             console.log(error);
         }
     }

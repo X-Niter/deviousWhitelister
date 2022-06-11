@@ -10,6 +10,10 @@ const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('
 const clientId = process.env.CLIENTID;
 const guildId = process.env.GUILDID;
 
+/**
+* @todo Finish updating code with FileLogger custom file logging builder
+*/
+
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     commands.push(command.data.toJSON());
