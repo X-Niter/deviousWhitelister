@@ -1,61 +1,48 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const {
+    Client,
     MessageActionRow,
     MessageSelectMenu,
     MessageEmbed
 } = require('discord.js');
-const fs = require('fs');
-const db = require('better-sqlite3')('users.db');
-const { getInstance, sendToInstance } = require('../ampWrapper')
 
+const {insertToDb, retrieveFromDb, constructJSON, FileLogger} = require('../utils.js')
+const { getInstance, sendToInstance } = require('../ampWrapper');
 
-async function insertToDb(queryString) {
-    let query = await db.prepare(queryString).run()
-    return query
-}
-
-function retrieveFromDb(queryString) {
-    let query = db.prepare(queryString).get()
-    return query
-}
-
-// .json server list parser
-function constructJSON() {
-    let servers
-    servers = JSON.parse(fs.readFileSync('./servers.json', 'utf8'))
-    servers.forEach(server => {
-        server.value = server.value + "," + server.label
-    })
-    return servers
-}
 
 //AMP Instance whitelist event
-async function whitelist(user, userID, API, instanceName) {
+async function whitelist(minecraftName, userID, API, instanceName) {
     const GUID = await getInstance(instanceName, API)
         //check if user is already in the database
-    let userData = retrieveFromDb(`SELECT * FROM users WHERE id = '${userID}' AND server = '${instanceName}' AND api = '${API}'`)
+    let userData = retrieveFromDb(`SELECT * FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     if (userData) {
         return 409 //user is already in the database, return an error code
     } else {
         //Without directly parsing for console response, I've atleast added in a check on our bots end to see if the whitelist command sends successfully
         // A try#catch for seeing if command is sent by the bot successfully
+
         try {
             // Send whitelist command to AMP Server Instance
-            await sendToInstance(GUID, `whitelist add ${user}`, API)
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: Whitelisting Discord user [${userID}] with game name [${user}] on [${instanceName}], APIUrl [${API}]\n`)
-            console.info(`Discord user [${userID}] with game name [${user}] whitelisted on [${instanceName}], APIUrl [${API}]`);
+            await sendToInstance(GUID, `whitelist add ${minecraftName}`, API)
+            FileLogger("whitelist", "info", `Whitelisted Discord user [${userID}] with game name [${minecraftName}] on [${instanceName}], APIUrl [${API}]`)
+            console.info(`Discord user [${userID}] with game name [${minecraftName}] whitelisted on [${instanceName}], APIUrl [${API}]`);
 
             //append user to a json file called users.json
             // Db add method called first to work with whitelist command error handling below
-            insertToDb(`INSERT OR REPLACE INTO users VALUES ('${userID}', '${user}', '${instanceName}', '${API}')`)
-                // Catch any errors & and on the error event Remove the user from the bots database to avoid adding users who actually were not whitelisted as the whitelist command failed to send
+            insertToDb(`INSERT OR REPLACE INTO users VALUES ('${userID}', '${minecraftName}', '${instanceName}')`)
+        
+        // Catch any errors & and on the error event Remove the user from the bots database to avoid adding users who actually were not whitelisted as the whitelist command failed to send
         } catch (error) {
+
             // Clear the user for the choosen instance from the database sense the command failed so they are not actually whitelisted.
-            insertToDb(`DELETE FROM users WHERE id = '${userID}' AND server = '${instanceName}' AND api = '${API}'`)
-                //Log the errors in M1so format
-            fs.appendFileSync('./log.txt', `${new Date().toLocaleString()}: ${error} in whitelist.js at line 36\n`)
-                // Easy readible console error for easier troubleshooting
+            insertToDb(`DELETE FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
+            
+            //Log the errors in M1so format
+            FileLogger("whitelist", "error", `Error whitelisting Discord user [${userID}] with game name [${minecraftName}] on [${instanceName}], APIUrl [${API}] \n STACK TRACE: \n ${error}`)
+            
+            // Easy readible console error for easier troubleshooting
             console.error("Failed to send whitelist command to instance! Clearing user Database entry");
+
             // Get stack trace in console AFTER the easy to read error is logged
             console.error(error);
         }
@@ -78,8 +65,9 @@ module.exports = {
                 .setPlaceholder("Select a server")
                 .addOptions(constructJSON())
             )
-        interaction.user.send({ content: 'Please select the server you wish to be withelisted on', components: [row] }).then(() => {
-            interaction.reply({ ephemeral: true, content: "Check your messages!" });
+        interaction.reply({ ephemeral: true, content: "Check your messages!" })
+        .then(() => {
+            interaction.user.send({ content: 'Please select the server you wish to be withelisted on', components: [row] });
         }).catch(err => {
             interaction.reply({ ephemeral: true, content: "I couldn't send you a message!, Allow me to message you by going into the server privacy settings and enabling direct messages, here is a video for reference https://streamable.com/h71d3h" });
         })
@@ -94,17 +82,19 @@ module.exports = {
                 .addOptions(constructJSON())
             )
         const values = interaction.values.toString().split(',')
-            //await interaction.update(row.setComponents.addOptions(constructJSON()));
-
-        let start = await interaction.user.send({
-            content: `Please respond with your Minecraft Username.`
-        }).catch(err => {
-            interaction.reply({
-                ephemeral: true,
-                content: "I couldn't send you a message!, Allow me to message you by going into the server privacy settings and enabling direct messages, here is a video for reference https://streamable.com/h71d3h"
+        
+        // if the interaction channel is not a DM, interaction reply
+        if (interaction.channel.type !== 'DM') {
+            interaction.reply({ ephemeral: true, content: "Check your direct messages!" })
+            .catch(err => {
+                return interaction.reply({
+                    ephemeral: true,
+                    content: "I couldn't send you a message!, Allow me to message you by going into the server privacy settings and enabling direct messages, here is a video for reference https://streamable.com/h71d3h"
+                });
             });
-        })
-
+        }
+        const start = await interaction.user.send({ content: `Please respond with your Minecraft Username.` });
+        
         let filter = m => m.author.id === interaction.user.id
         start.channel.createMessageCollector({
             filter,
