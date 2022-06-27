@@ -15,7 +15,13 @@ async function fixWhitelist(user, userID, API, instanceName) {
     }
     
 
-    await sendToInstance(GUID, [`whitelist remove ${username}`,`whitelist add ${user}`], API)
+    if (username == user || user == username) {
+        await sendToInstance(GUID, `whitelist remove ${user}`, API)
+        await sendToInstance(GUID, `whitelist add ${user}`, API)
+    } else {
+        await sendToInstance(GUID, `whitelist remove ${username}`, API)
+        await sendToInstance(GUID, `whitelist add ${user}`, API)
+    }
 
     //replace the information in the database with the new information
     insertToDb(`DELETE FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
