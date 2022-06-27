@@ -127,3 +127,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Database is only needed localy, no need to send it unless actuall changes are made.
+.db 
+
+
