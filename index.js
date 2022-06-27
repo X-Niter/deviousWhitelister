@@ -78,7 +78,8 @@ client.on('guildMemberRemove', async member => {
                 FileLogger("API", "fatal", `Failed to get instance ${serverName} @ ${isntanceAPI} index.js line 73\n STACK TRACE: \n ${error}`)
             }
             try {
-                await sendToInstance(GUID, [`kick ${minecraftUsername} User left the Discord Community`, `whitelist remove ${minecraftUsername}`], isntanceAPI);
+                await sendToInstance(GUID, `kick ${minecraftUsername} User left the Discord Community`, isntanceAPI);
+                await sendToInstance(GUID, `whitelist remove ${minecraftUsername}`, isntanceAPI);
                 console.log(`Removing ${minecraftUsername} from ${serverName}`);
             } catch (error) {
                 success = false;

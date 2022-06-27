@@ -99,10 +99,9 @@ async function sendToInstance(GUID, messages, API) {
             if (messages != null) {
                 clearTimeout(timeout);
                 console.log(`Sending commands to AMP server`);
-                messages.forEach(async message => {
-                    let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId, cancelToken: source.token })
-                    return response.data
-                });
+                
+                let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: messages, SESSIONID: instanceSessionId, cancelToken: source.token })
+                return response.data
             }       
             
         } else {

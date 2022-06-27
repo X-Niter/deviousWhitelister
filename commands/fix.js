@@ -13,10 +13,15 @@ async function fixWhitelist(user, userID, API, instanceName) {
     if (!username) {
         return 404
     }
+
+    if (username == user || user == username) {
+        await sendToInstance(GUID, `whitelist remove ${user}`, API)
+        await sendToInstance(GUID, `whitelist add ${user}`, API)
+    } else {
+        await sendToInstance(GUID, `whitelist remove ${username}`, API)
+        await sendToInstance(GUID, `whitelist add ${user}`, API)
+    }
     
-
-    await sendToInstance(GUID, Array(`whitelist remove ${username}`,`whitelist add ${user}`), API)
-
     //replace the information in the database with the new information
     insertToDb(`DELETE FROM users WHERE id = '${userID}' AND server = '${instanceName}'`)
     insertToDb(`INSERT INTO users VALUES ('${userID}', '${user}', '${instanceName}')`)
