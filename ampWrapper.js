@@ -99,10 +99,15 @@ async function sendToInstance(GUID, messages, API) {
             if (messages != null) {
                 clearTimeout(timeout);
                 console.log(`Sending commands to AMP server`);
-                
+                let response = await Promise.all(messages.map(message => axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId, cancelToken: source.token })))
+                return response.data
+            } else {
+                clearTimeout(timeout);
+                console.log(`Sending command to AMP server`);
+                //if messages is not an array then we will just await axios.post(API + `/ADSModule/Servers/${GUID}/API/ADSModule/SendConsoleMessage`, { message: message, SESSIONID: instanceSessionId, cancelToken: source.token }) and export the axios post as a variable so we can return it as response.data.result
                 let response = await axios.post(API + `/ADSModule/Servers/${GUID}/API/Core/SendConsoleMessage`, { message: messages, SESSIONID: instanceSessionId, cancelToken: source.token })
                 return response.data
-            }       
+            }            
             
         } else {
             clearTimeout(timeout);
